@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snippet Index — Kod Kütüphanen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root{
+    --bg: #12141c;
+    --bg-tint: radial-gradient(1200px 600px at 12% -10%, rgba(79,209,197,0.06), transparent 55%),
+                radial-gradient(900px 500px at 100% 0%, rgba(245,166,35,0.05), transparent 50%);
+    --surface: #191d28;
+    --surface-2: #20242f;
+    --surface-3: #262b38;
+    --border: #2c3140;
+    --border-soft: #23283400;
+    --text: #eceef3;
+    --text-muted: #8993ab;
+    --text-faint: #5b6377;
+    --accent: #f5a623;
+    --accent-dim: #f5a62333;
+    --accent-ink: #1a1406;
+    --teal: #4fd1c5;
+    --danger: #e2725b;
+    --radius: 3px;
+    --mono-ui: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --code-font: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--bg-tint), var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--accent-dim); color: var(--accent); }
+
+  button, input, textarea, select{ font-family: inherit; }
+
+  /* ---------- Layout shell ---------- */
+  .app{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:14px 22px;
+    border-bottom:1px solid var(--border);
+    background: rgba(18,20,28,0.85);
+    backdrop-filter: blur(6px);
+    position: sticky;
+    top:0;
+    z-index: 30;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family: var(--mono-ui);
+    font-weight:700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .brand .mark{
+    width:22px; height:22px;
+    border:1.5px solid var(--accent);
+    color: var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px;
+    border-radius: 2px;
+    transform: rotate(-4deg);
+  }
+  .brand .sub{
+    font-size:10.5px;
+    color: var(--text-faint);
+    font-weight:500;
+    letter-spacing:0.14em;
+    text-transform: uppercase;
+    margin-left:4px;
+    display:none;
+  }
+  @media(min-width:720px){ .brand .sub{ display:inline; } }
+
+  .searchwrap{
+    flex:1;
+    max-width:460px;
+    position:relative;
+  }
+  .searchwrap input{
+    width:100%;
+    background: var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 12px 9px 32px;
+    border-radius: var(--radius);
+    font-size:13.5px;
+    font-family: var(--mono-ui);
+    outline:none;
+    transition: border-color .15s ease;
+  }
+  .searchwrap input:focus{ border-color: var(--accent); }
+  .searchwrap input::placeholder{ color: var(--text-faint); }
+  .searchwrap svg{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color: var(--text-faint); pointer-events:none;
+  }
+
+  .newbtn{
+    background: var(--accent);
+    color: var(--accent-ink);
+    border:none;
+    padding:9px 16px;
+    border-radius: var(--radius);
+    font-family: var(--mono-ui);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .newbtn:hover{ box-shadow: 0 0 0 3px var(--accent-dim); }
+  .newbtn:active{ transform: scale(0.97); }
+
+  .body-layout{
+    display:flex;
+    flex:1;
+    min-height:0;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:210px;
+    flex-shrink:0;
+    border-right:1px solid var(--border);
+    padding:20px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  @media(max-width:860px){ .sidebar{ display:none; } }
+
+  .side-section .side-label{
+    font-family: var(--mono-ui);
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--text-faint);
+    margin-bottom:10px;
+    padding-left:2px;
+  }
+
+  .lang-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+  .lang-item{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:7px 8px;
+    border-radius: var(--radius);
+    cursor:pointer;
+    font-size:13px;
+    color: var(--text-muted);
+    border-left: 2px solid transparent;
+    transition: background .12s ease, color .12s ease;
+  }
+  .lang-item:hover{ background: var(--surface); color: var(--text); }
+  .lang-item.active{ background: var(--surface-2); color: var(--text); border-left-color: var(--accent); }
+  .lang-item .lname{ display:flex; align-items:center; gap:8px; }
+  .lang-dot{ width:8px; height:8px; border-radius:1px; flex-shrink:0; }
+  .lang-item .lcount{ font-family: var(--mono-ui); font-size:11px; color: var(--text-faint); }
+
+  .tag-cloud{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tag-chip{
+    font-family: var(--mono-ui);
+    font-size:11px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border:1px solid var(--border);
+    padding:4px 8px;
+    border-radius: 20px;
+    cursor:pointer;
+    transition: all .12s ease;
+  }
+  .tag-chip:hover{ color:var(--text); border-color: var(--text-faint); }
+  .tag-chip.active{ color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+
+  .side-count{
+    margin-top:auto;
+    font-family: var(--mono-ui);
+    font-size:11px;
+    color: var(--text-faint);
+    border-top:1px solid var(--border);
+    padding-top:14px;
+    line-height:1.6;
+  }
+  .side-count b{ color: var(--text-muted); }
+
+  /* ---------- Main / catalog ---------- */
+  .main{
+    flex:1;
+    min-width:0;
+    padding:22px 24px 60px;
+    overflow-y:auto;
+  }
+
+  .main-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .main-head h1{
+    font-family: var(--mono-ui);
+    font-size:15px;
+    font-weight:600;
+    margin:0;
+    color: var(--text);
+    letter-spacing:0.01em;
+  }
+  .main-head .count{
+    font-family: var(--mono-ui);
+    font-size:11.5px;
+    color: var(--text-faint);
+  }
+
+  .catalog-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap:14px;
+  }
+
+  .card{
+    position:relative;
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    padding:14px 14px 12px 16px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    transition: border-color .14s ease, transform .14s ease, background .14s ease;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0; width:4px;
+    background: var(--spine, var(--accent));
+  }
+  .card:hover{ border-color: var(--text-faint); background: var(--surface-2); transform: translateY(-1px); }
+
+  .card-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .card-cat{
+    font-family: var(--mono-ui);
+    font-size:10.5px;
+    color: var(--text-faint);
+    letter-spacing:0.06em;
+  }
+  .card-lang{
+    font-family: var(--mono-ui);
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color: var(--spine, var(--accent));
+    background: color-mix(in srgb, var(--spine, var(--accent)) 15%, transparent);
+    padding:2px 7px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+
+  .card h3{
+    margin:0;
+    font-size:14.5px;
+    font-weight:600;
+    color: var(--text);
+    line-height:1.3;
+  }
+
+  .card-preview{
+    background: var(--bg);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:8px 10px;
+    font-family: var(--code-font);
+    font-size:11px;
+    line-height:1.55;
+    color: var(--text-muted);
+    overflow:hidden;
+    max-height:74px;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .card-preview .hljs{ background:transparent; padding:0; }
+
+  .card-bottom{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:2px;
+  }
+  .card-tags{ display:flex; gap:5px; flex-wrap:wrap; }
+  .card-tags span{
+    font-family: var(--mono-ui);
+    font-size:10px;
+    color: var(--text-faint);
+  }
+  .card-tags span::before{ content:"#"; }
+
+  .icon-btn{
+    background:none; border:1px solid var(--border); color: var(--text-muted);
+    width:26px; height:26px; border-radius:2px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: all .12s ease;
+  }
+  .icon-btn:hover{ border-color: var(--accent); color: var(--accent); }
+  .icon-btn svg{ width:13px; height:13px; }
+  .icon-btn.copied{ border-color: var(--teal); color: var(--teal); }
+
+  .empty-state{
+    grid-column: 1/-1;
+    text-align:center;
+    padding:70px 20px;
+    color: var(--text-faint);
+    font-family: var(--mono-ui);
+  }
+  .empty-state .glyph{ font-size:26px; margin-bottom:10px; opacity:0.5; }
+  .empty-state p{ font-size:13px; margin:4px 0 0; }
+
+  /* ---------- Detail overlay ---------- */
+  .overlay{
+    position:fixed; inset:0; background: rgba(10,11,16,0.72);
+    display:flex; align-items:center; justify-content:center;
+    z-index:100; padding:24px;
+    opacity:0; pointer-events:none;
+    transition: opacity .15s ease;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+
+  .panel{
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    width:100%;
+    max-width:720px;
+    max-height:88vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transform: translateY(8px) scale(0.98);
+    transition: transform .16s ease;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  }
+  .overlay.show .panel{ transform: translateY(0) scale(1); }
+
+  .panel-head{
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--border);
+    gap:12px;
+  }
+  .panel-head .htitle{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .panel-head h2{ margin:0; font-size:17px; font-weight:600; word-break:break-word; }
+  .panel-head .meta{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .panel-actions{ display:flex; gap:8px; flex-shrink:0; }
+
+  .panel-body{ padding:18px 20px; overflow-y:auto; }
+  .panel-body pre{
+    margin:0; border-radius:4px; border:1px solid var(--border);
+    font-family: var(--code-font) !important;
+    font-size:12.5px !important;
+    line-height:1.65 !important;
+  }
+  .panel-body pre code.hljs{ padding:16px !important; border-radius:4px; }
+
+  .panel-tags{ display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+
+  .close-x{
+    background:none; border:none; color: var(--text-faint); cursor:pointer;
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+    border-radius:2px; flex-shrink:0;
+  }
+  .close-x:hover{ color: var(--text); background: var(--surface-3); }
+
+  /* ---------- Form modal ---------- */
+  .form-panel{ max-width:560px; }
+  .field{ margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-family: var(--mono-ui); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color: var(--text-faint);
+  }
+  .field input[type=text], .field textarea, .field select{
+    background: var(--bg); border:1px solid var(--border); color: var(--text);
+    padding:10px 12px; border-radius: var(--radius); font-size:13.5px; outline:none;
+    font-family: var(--sans);
+    transition: border-color .14s ease;
+  }
+  .field input[type=text]:focus, .field textarea:focus, .field select:focus{ border-color: var(--accent); }
+  .field textarea{ font-family: var(--code-font); font-size:12.5px; min-height:160px; resize:vertical; line-height:1.6; }
+  .field select{ font-family: var(--mono-ui); cursor:pointer; }
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+
+  .form-footer{
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:14px 20px; border-top:1px solid var(--border);
+  }
+  .btn{
+    padding:9px 16px; border-radius: var(--radius); font-family: var(--mono-ui);
+    font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--border);
+    background:transparent; color: var(--text-muted); transition: all .12s ease;
+  }
+  .btn:hover{ color: var(--text); border-color: var(--text-faint); }
+  .btn-primary{ background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn-primary:hover{ box-shadow: 0 0 0 3px var(--accent-dim); color:var(--accent-ink); }
+  .btn-danger{ color: var(--danger); }
+  .btn-danger:hover{ border-color: var(--danger); }
+
+  .hint{ font-size:11px; color: var(--text-faint); margin-top:2px; }
+
+  @media(max-width:560px){
+    .row2{ grid-template-columns: 1fr; }
+    .topbar{ flex-wrap:wrap; }
+    .searchwrap{ order:3; max-width:none; width:100%; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">&gt;_</span>
+      <span>SNIPPET INDEX</span>
+      <span class="sub">Developer Knowledge Base</span>
+    </div>
+    <div class="searchwrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="Başlık, kod veya etiket ara…">
+    </div>
+    <button class="newbtn" id="openNewBtn">+ Yeni Snippet</button>
+  </div>
+
+  <div class="body-layout">
+    <aside class="sidebar">
+      <div class="side-section">
+        <div class="side-label">Diller</div>
+        <ul class="lang-list" id="langList"></ul>
+      </div>
+      <div class="side-section">
+        <div class="side-label">Etiketler</div>
+        <div class="tag-cloud" id="tagCloud"></div>
+      </div>
+      <div class="side-count" id="sideCount"></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-head">
+        <h1 id="mainTitle">Tüm Snippet'ler</h1>
+        <span class="count" id="resultCount"></span>
+      </div>
+      <div class="catalog-grid" id="grid"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div class="overlay" id="detailOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div class="htitle">
+        <h2 id="detailTitle"></h2>
+        <div class="meta">
+          <span class="card-cat" id="detailCat"></span>
+          <span class="card-lang" id="detailLang"></span>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button class="icon-btn" id="detailCopyBtn" title="Kopyala">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        </button>
+        <button class="icon-btn" id="detailEditBtn" title="Düzenle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="icon-btn" id="detailDeleteBtn" title="Sil">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+        </button>
+        <button class="close-x" id="detailCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <pre><code id="detailCode"></code></pre>
+      <div class="panel-tags" id="detailTags"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Form overlay (add/edit) -->
+<div class="overlay" id="formOverlay">
+  <div class="panel form-panel">
+    <div class="panel-head">
+      <div class="htitle"><h2 id="formHeading">Yeni Snippet</h2></div>
+      <button class="close-x" id="formCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <input type="hidden" id="editId">
+      <div class="field">
+        <label for="fTitle">Başlık</label>
+        <input type="text" id="fTitle" placeholder="ör. Debounce fonksiyonu">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="fLang">Dil</label>
+          <select id="fLang"></select>
+        </div>
+        <div class="field">
+          <label for="fTags">Etiketler</label>
+          <input type="text" id="fTags" placeholder="helper, dom, utils">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fCode">Kod</label>
+        <textarea id="fCode" placeholder="Kod parçacığını buraya yapıştır…" spellcheck="false"></textarea>
+        <div class="hint">Etiketleri virgülle ayır. Kaydettiğinde otomatik olarak sözdizimi renklendirilir.</div>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn" id="formCancelBtn">Vazgeç</button>
+      <button class="btn btn-primary" id="formSaveBtn">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  // ---------- Language registry ----------
+  var LANGS = [
+    { key:'python',     label:'Python',      hljs:'python',     color:'#3E8EDB', abbr:'PY' },
+    { key:'javascript',label:'JavaScript',  hljs:'javascript', color:'#E8C547', abbr:'JS' },
+    { key:'typescript',label:'TypeScript',  hljs:'typescript', color:'#4FA8DA', abbr:'TS' },
+    { key:'sql',        label:'SQL',         hljs:'sql',        color:'#58B090', abbr:'SQL' },
+    { key:'bash',       label:'Bash',        hljs:'bash',       color:'#C97D60', abbr:'SH' },
+    { key:'css',        label:'CSS',         hljs:'css',        color:'#A78BDA', abbr:'CSS' },
+    { key:'html',       label:'HTML',        hljs:'xml',        color:'#E2725B', abbr:'HTML' },
+    { key:'go',         label:'Go',          hljs:'go',         color:'#57C7E3', abbr:'GO' },
+    { key:'json',       label:'JSON',        hljs:'json',       color:'#8FBF7F', abbr:'JSON' },
+    { key:'other',      label:'Diğer',       hljs:'plaintext',  color:'#8993AB', abbr:'TXT' }
+  ];
+  function langInfo(key){ return LANGS.find(function(l){return l.key===key;}) || LANGS[LANGS.length-1]; }
+
+  // ---------- Seed data ----------
+  var seed = [
+    {
+      title: 'Debounce fonksiyonu',
+      language: 'javascript',
+      tags: ['helper','dom','performance'],
+      code: "function debounce(fn, delay = 300) {\n  let timer;\n  return function (...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  };\n}\n\n// kullanım\nwindow.addEventListener('resize', debounce(() => {\n  console.log('resize bitti');\n}, 250));"
+    },
+    {
+      title: 'Upsert (INSERT ... ON CONFLICT)',
+      language: 'sql',
+      tags: ['postgres','upsert'],
+      code: "INSERT INTO users (id, email, name)\nVALUES ($1, $2, $3)\nON CONFLICT (id)\nDO UPDATE SET\n  email = EXCLUDED.email,\n  name  = EXCLUDED.name,\n  updated_at = now();"
+    },
+    {
+      title: 'Python venv hızlı kurulum',
+      language: 'bash',
+      tags: ['venv','setup'],
+      code: "python3 -m venv .venv\nsource .venv/bin/activate\npip install --upgrade pip\npip install -r requirements.txt\ndeactivate  # bitince"
+    },
+    {
+      title: 'Liste kırma (chunk) trick',
+      language: 'python',
+      tags: ['list','helper'],
+      code: "def chunk(lst, size):\n    return [lst[i:i + size] for i in range(0, len(lst), size)]\n\n# kullanım\nchunk([1,2,3,4,5,6,7], 3)\n# -> [[1,2,3],[4,5,6],[7]]"
+    },
+    {
+      title: 'Flexbox tam ortala',
+      language: 'css',
+      tags: ['flexbox','center'],
+      code: ".center {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-height: 100vh;\n}"
+    },
+    {
+      title: 'Faydalı git alias\'ları',
+      language: 'bash',
+      tags: ['git','productivity'],
+      code: "git config --global alias.st 'status -sb'\ngit config --global alias.co checkout\ngit config --global alias.lg \"log --oneline --graph --all\"\ngit config --global alias.undo 'reset --soft HEAD~1'"
+    },
+    {
+      title: 'Fetch ile JSON GET + hata yönetimi',
+      language: 'typescript',
+      tags: ['fetch','api'],
+      code: "async function getJSON<T>(url: string): Promise<T> {\n  const res = await fetch(url);\n  if (!res.ok) {\n    throw new Error(`İstek başarısız: ${res.status}`);\n  }\n  return res.json() as Promise<T>;\n}"
+    }
+  ];
+
+  var counters = {}; // per-language catalog counter
+
+  function nextCatalogNo(langKey){
+    var info = langInfo(langKey);
+    counters[langKey] = (counters[langKey] || 0) + 1;
+    return info.abbr + '-' + String(counters[langKey]).padStart(3,'0');
+  }
+
+  var snippets = seed.map(function(s, i){
+    return {
+      id: 's' + (i+1),
+      title: s.title,
+      code: s.code,
+      language: s.language,
+      tags: s.tags,
+      catalogNo: nextCatalogNo(s.language),
+      created_at: new Date(Date.now() - (seed.length - i) * 86400000).toISOString()
+    };
+  });
+
+  var state = {
+    query: '',
+    activeLang: 'all',
+    activeTag: null
+  };
+
+  // ---------- Helpers ----------
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function highlighted(code, hljsLang){
+    try{
+      return hljs.highlight(code, { language: hljsLang, ignoreIllegals: true }).value;
+    }catch(e){
+      return escapeHtml(code);
+    }
+  }
+
+  function allTags(){
+    var set = {};
+    snippets.forEach(function(s){ s.tags.forEach(function(t){ set[t] = (set[t]||0)+1; }); });
+    return Object.keys(set).sort().map(function(t){ return { tag:t, count:set[t] }; });
+  }
+
+  function matchesFilters(s){
+    if(state.activeLang !== 'all' && s.language !== state.activeLang) return false;
+    if(state.activeTag && s.tags.indexOf(state.activeTag) === -1) return false;
+    if(state.query){
+      var q = state.query.toLowerCase();
+      var hay = (s.title + ' ' + s.code + ' ' + s.tags.join(' ')).toLowerCase();
+      if(hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }
+
+  // ---------- Render: sidebar ----------
+  function renderSidebar(){
+    var langList = document.getElementById('langList');
+    var counts = {};
+    snippets.forEach(function(s){ counts[s.language] = (counts[s.language]||0)+1; });
+
+    var usedLangs = LANGS.filter(function(l){ return counts[l.key]; });
+
+    var html = '';
+    html += '<li class="lang-item ' + (state.activeLang==='all'?'active':'') + '" data-lang="all">' +
+              '<span class="lname"><span class="lang-dot" style="background:#8993ab"></span>Tümü</span>' +
+              '<span class="lcount">' + snippets.length + '</span></li>';
+    usedLangs.forEach(function(l){
+      html += '<li class="lang-item ' + (state.activeLang===l.key?'active':'') + '" data-lang="' + l.key + '">' +
+                '<span class="lname"><span class="lang-dot" style="background:' + l.color + '"></span>' + l.label + '</span>' +
+                '<span class="lcount">' + counts[l.key] + '</span></li>';
+    });
+    langList.innerHTML = html;
+
+    Array.prototype.forEach.call(langList.querySelectorAll('.lang-item'), function(el){
+      el.addEventListener('click', function(){
+        state.activeLang = el.getAttribute('data-lang');
+        renderAll();
+      });
+    });
+
+    var tagCloud = document.getElementById('tagCloud');
+    var tags = allTags();
+    tagCloud.innerHTML = tags.map(function(t){
+      return '<span class="tag-chip ' + (state.activeTag===t.tag?'active':'') + '" data-tag="' + escapeHtml(t.tag) + '">' + escapeHtml(t.tag) + '</span>';
+    }).join('');
+    Array.prototype.forEach.call(tagCloud.querySelectorAll('.tag-chip'), function(el){
+      el.addEventListener('click', function(){
+        var tag = el.getAttribute('data-tag');
+        state.activeTag = (state.activeTag === tag) ? null : tag;
+        renderAll();
+      });
+    });
+
+    document.getElementById('sideCount').innerHTML =
+      '<b>' + snippets.length + '</b> snippet · <b>' + usedLangs.length + '</b> dil · <b>' + tags.length + '</b> etiket';
+  }
+
+  // ---------- Render: grid ----------
+  function renderGrid(){
+    var grid = document.getElementById('grid');
+    var filtered = snippets.filter(matchesFilters).sort(function(a,b){
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    document.getElementById('resultCount').textContent = filtered.length + ' sonuç';
+
+    var titleParts = [];
+    if(state.activeLang !== 'all') titleParts.push(langInfo(state.activeLang).label);
+    if(state.activeTag) titleParts.push('#' + state.activeTag);
+    document.getElementById('mainTitle').textContent = titleParts.length ? titleParts.join(' · ') : "Tüm Snippet'ler";
+
+    if(filtered.length === 0){
+      grid.innerHTML = '<div class="empty-state"><div class="glyph">⌗</div><div>Eşleşen snippet yok</div>' +
+        '<p>Filtreyi temizle ya da yeni bir snippet ekle.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function(s){
+      var info = langInfo(s.language);
+      var previewCode = s.code.length > 220 ? s.code.slice(0,220) + '…' : s.code;
+      return '<article class="card" style="--spine:' + info.color + '" data-id="' + s.id + '">' +
+        '<div class="card-top">' +
+          '<span class="card-cat">' + s.catalogNo + '</span>' +
+          '<span class="card-lang">' + info.label + '</span>' +
+        '</div>' +
+        '<h3>' + escapeHtml(s.title) + '</h3>' +
+        '<div class="card-preview"><code>' + highlighted(previewCode, info.hljs) + '</code></div>' +
+        '<div class="card-bottom">' +
+          '<div class="card-tags">' + s.tags.map(function(t){ return '<span>' + escapeHtml(t) + '</span>'; }).join('') + '</div>' +
+          '<button class="icon-btn copy-btn" data-id="' + s.id + '" title="Kopyala">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    Array.prototype.forEach.call(grid.querySelectorAll('.card'), function(card){
+      card.addEventListener('click', function(e){
+        if(e.target.closest('.copy-btn')) return;
+        openDetail(card.getAttribute('data-id'));
+      });
+    });
+    Array.prototype.forEach.call(grid.querySelectorAll('.copy-btn'), function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var s = snippets.find(function(x){ return x.id === btn.getAttribute('data-id'); });
+        copyToClipboard(s.code, btn);
+      });
+    });
+  }
+
+  function renderAll(){ renderSidebar(); renderGrid(); }
+
+  // ---------- Clipboard ----------
+  function copyToClipboard(text, btnEl){
+    function done(){
+      if(!btnEl) return;
+      btnEl.classList.add('copied');
+      var orig = btnEl.innerHTML;
+      btnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>';
+      setTimeout(function(){ btnEl.classList.remove('copied'); btnEl.innerHTML = orig; }, 1200);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function fallbackCopy(text, cb){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    if(cb) cb();
+  }
+
+  // ---------- Detail overlay ----------
+  var detailOverlay = document.getElementById('detailOverlay');
+  var currentDetailId = null;
+
+  function openDetail(id){
+    var s = snippets.find(function(x){ return x.id === id; });
+    if(!s) return;
+    currentDetailId = id;
+    var info = langInfo(s.language);
+    document.getElementById('detailTitle').textContent = s.title;
+    document.getElementById('detailCat').textContent = s.catalogNo;
+    var langEl = document.getElementById('detailLang');
+    langEl.textContent = info.label;
+    langEl.style.setProperty('color', info.color);
+    langEl.style.setProperty('background', 'color-mix(in srgb, ' + info.color + ' 15%, transparent)');
+    var codeEl = document.getElementById('detailCode');
+    codeEl.className = 'language-' + info.hljs;
+    codeEl.innerHTML = highlighted(s.code, info.hljs);
+    document.getElementById('detailTags').innerHTML = s.tags.map(function(t){
+      return '<span class="tag-chip">' + escapeHtml(t) + '</span>';
+    }).join('');
+    detailOverlay.classList.add('show');
+  }
+  function closeDetail(){ detailOverlay.classList.remove('show'); currentDetailId = null; }
+
+  document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
+  detailOverlay.addEventListener('click', function(e){ if(e.target === detailOverlay) closeDetail(); });
+  document.getElementById('detailCopyBtn').addEventListener('click', function(e){
+    var s = snippets.find(function(x){ return x.id === currentDetailId; });
+    if(s) copyToClipboard(s.code, e.currentTarget);
+  });
+  document.getElementById('detailDeleteBtn').addEventListener('click', function(){
+    if(!currentDetailId) return;
+    if(confirm('Bu snippet silinsin mi?')){
+      snippets = snippets.filter(function(x){ return x.id !== currentDetailId; });
+      closeDetail();
+      renderAll();
+    }
+  });
+  document.getElementById('detailEditBtn').addEventListener('click', function(){
+    var s = snippets.find(function(x){ return x.id === currentDetailId; });
+    if(s){ closeDetail(); openForm(s); }
+  });
+
+  // ---------- Form overlay (add / edit) ----------
+  var formOverlay = document.getElementById('formOverlay');
+  var fLang = document.getElementById('fLang');
+  fLang.innerHTML = LANGS.map(function(l){ return '<option value="' + l.key + '">' + l.label + '</option>'; }).join('');
+
+  function openForm(existing){
+    document.getElementById('formHeading').textContent = existing ? 'Snippet Düzenle' : 'Yeni Snippet';
+    document.getElementById('editId').value = existing ? existing.id : '';
+    document.getElementById('fTitle').value = existing ? existing.title : '';
+    document.getElementById('fLang').value = existing ? existing.language : 'javascript';
+    document.getElementById('fTags').value = existing ? existing.tags.join(', ') : '';
+    document.getElementById('fCode').value = existing ? existing.code : '';
+    formOverlay.classList.add('show');
+    setTimeout(function(){ document.getElementById('fTitle').focus(); }, 50);
+  }
+  function closeForm(){ formOverlay.classList.remove('show'); }
+
+  document.getElementById('openNewBtn').addEventListener('click', function(){ openForm(null); });
+  document.getElementById('formCloseBtn').addEventListener('click', closeForm);
+  document.getElementById('formCancelBtn').addEventListener('click', closeForm);
+  formOverlay.addEventListener('click', function(e){ if(e.target === formOverlay) closeForm(); });
+
+  document.getElementById('formSaveBtn').addEventListener('click', function(){
+    var id = document.getElementById('editId').value;
+    var title = document.getElementById('fTitle').value.trim();
+    var language = document.getElementById('fLang').value;
+    var tags = document.getElementById('fTags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+    var code = document.getElementById('fCode').value;
+
+    if(!title || !code){
+      alert('Başlık ve kod alanı zorunlu.');
+      return;
+    }
+
+    if(id){
+      var s = snippets.find(function(x){ return x.id === id; });
+      if(s){
+        s.title = title; s.language = language; s.tags = tags; s.code = code;
+        if(langInfo(s.language).key !== s.language){ /* no-op guard */ }
+      }
+    } else {
+      snippets.unshift({
+        id: 's' + Date.now(),
+        title: title,
+        code: code,
+        language: language,
+        tags: tags,
+        catalogNo: nextCatalogNo(language),
+        created_at: new Date().toISOString()
+      });
+    }
+    closeForm();
+    renderAll();
+  });
+
+  // ---------- Search ----------
+  document.getElementById('searchInput').addEventListener('input', function(e){
+    state.query = e.target.value;
+    renderGrid();
+  });
+
+  // ---------- Keyboard ----------
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ closeDetail(); closeForm(); }
+    if((e.metaKey || e.ctrlKey) && e.key === 'k'){
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
